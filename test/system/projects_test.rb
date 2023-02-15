@@ -10,11 +10,19 @@ class ProjectsTest < ApplicationSystemTestCase
     admin.password = admin.password_confirmation = 'password'
     admin.save!
 
-    Project.find_or_create_by!(name: 'Active project', active: true)
-    Project.find_or_create_by!(name: 'Inactive project', active: false)
+    @active_project = Project.find_or_create_by!(name: 'Active project', active: true)
+    @inactive_project = Project.find_or_create_by!(name: 'Inactive project', active: false)
+
+    @raise_server_errors = Capybara.raise_server_errors
+  end
+
+  teardown do
+    Capybara.raise_server_errors = @raise_server_errors
   end
 
   test 'user access' do
+    Capybara.raise_server_errors = false
+
     visit root_path
     fill_in 'Email', with: 'user@example.com'
     fill_in 'Password', with: 'password'
@@ -22,6 +30,13 @@ class ProjectsTest < ApplicationSystemTestCase
 
     assert_text 'Active project'
     assert_no_text 'Inactive project'
+
+    visit project_path(@active_project)
+    assert_current_path project_path(@active_project)
+    assert_text 'Active project'
+
+    visit project_path(@inactive_project)
+    assert_text 'CanCan::AccessDenied'
   end
 
   test 'admin access' do
@@ -31,6 +46,14 @@ class ProjectsTest < ApplicationSystemTestCase
     click_button 'Log in'
 
     assert_text 'Active project'
+    assert_text 'Inactive project'
+
+    visit project_path(@active_project)
+    assert_current_path project_path(@active_project)
+    assert_text 'Active project'
+
+    visit project_path(@inactive_project)
+    assert_current_path project_path(@inactive_project)
     assert_text 'Inactive project'
   end
 
