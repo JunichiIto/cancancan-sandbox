@@ -2,42 +2,35 @@ require "application_system_test_case"
 
 class ProjectsTest < ApplicationSystemTestCase
   setup do
-    @project = projects(:one)
+    user = User.find_or_initialize_by(email: 'user@example.com', admin: false)
+    user.password = user.password_confirmation = 'password'
+    user.save!
+
+    admin = User.find_or_initialize_by(email: 'admin@example.com', admin: true)
+    admin.password = admin.password_confirmation = 'password'
+    admin.save!
+
+    Project.find_or_create_by!(name: 'Active project', active: true)
+    Project.find_or_create_by!(name: 'Inactive project', active: false)
   end
 
-  test "visiting the index" do
-    visit projects_url
-    assert_selector "h1", text: "Projects"
+  test 'user access' do
+    visit root_path
+    fill_in 'Email', with: 'user@example.com'
+    fill_in 'Password', with: 'password'
+    click_button 'Log in'
+
+    assert_text 'Active project'
+    assert_no_text 'Inactive project'
   end
 
-  test "should create project" do
-    visit projects_url
-    click_on "New project"
+  test 'admin access' do
+    visit root_path
+    fill_in 'Email', with: 'admin@example.com'
+    fill_in 'Password', with: 'password'
+    click_button 'Log in'
 
-    check "Active" if @project.active
-    fill_in "Name", with: @project.name
-    click_on "Create Project"
-
-    assert_text "Project was successfully created"
-    click_on "Back"
-  end
-
-  test "should update Project" do
-    visit project_url(@project)
-    click_on "Edit this project", match: :first
-
-    check "Active" if @project.active
-    fill_in "Name", with: @project.name
-    click_on "Update Project"
-
-    assert_text "Project was successfully updated"
-    click_on "Back"
-  end
-
-  test "should destroy Project" do
-    visit project_url(@project)
-    click_on "Destroy this project", match: :first
-
-    assert_text "Project was successfully destroyed"
+    assert_text 'Active project'
+    assert_text 'Inactive project'
   end
 end
