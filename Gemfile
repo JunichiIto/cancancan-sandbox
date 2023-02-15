@@ -73,3 +73,5 @@ end
 
 gem 'devise', github: 'heartcombo/devise'
 gem 'cancancan'
+gem 'safer_initialize'
+gem 'request_store'
